@@ -1,97 +1,81 @@
 import express from 'express'
-import { Client } from 'ssh2'
-import { v4 as uuidv4 } from 'uuid'
+import { connectToServer } from '../utils/ssh-utils'
+import { z } from 'zod'
 
 const router = express.Router()
 
 // Almacenar conexiones activas
-export const activeConnections = new Map<string, Client>()
+export const activeConnections = new Map()
 
-router.post('/connect', (req, res) => {
-  const { host, port, username, password } = req.body
+// Schema para validación
+const connectionSchema = z.object({
+  host: z.string(),
+  port: z.number().default(22),
+  username: z.string(),
+  password: z.string()
+})
 
-  if (!host || !port || !username || !password) {
-    return res.status(400).json({
-      success: false,
-      message: 'Faltan parámetros de conexión'
-    })
-  }
-
-  const connectionId = uuidv4()
-  const client = new Client()
-  let hasResponded = false
-
-  const sendResponse = (response: any) => {
-    if (!hasResponded) {
-      hasResponded = true
-      res.json(response)
-    }
-  }
-
-  client.on('ready', () => {
-    activeConnections.set(connectionId, client)
-    sendResponse({
-      success: true,
-      connectionId,
-      message: 'Conexión SSH establecida correctamente'
-    })
-  })
-
-  client.on('error', (err) => {
-    sendResponse({
-      success: false,
-      message: `Error al conectar: ${err.message}`
-    })
-  })
-
+router.post('/connect', async (req, res) => {
   try {
-    client.connect({
-      host,
-      port,
-      username,
-      password
-    })
-    return // Adding explicit return after starting connection
-  } catch (err: any) {
-    sendResponse({
-      success: false,
-      message: `Error al conectar: ${err.message}`
-    })
-    return
+    const data = connectionSchema.parse(req.body)
+    console.log(`Intentando conectar a: ${data.host}:${data.port} como ${data.username}`)
+    
+    const result = await connectToServer(data)
+    res.json(result)
+  } catch (error) {
+    console.error('Error en conexión SSH:', error)
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Datos de conexión inválidos',
+        details: error.errors 
+      })
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Error al establecer la conexión SSH'
+      })
+    }
   }
 })
 
-router.post('/disconnect', (req, res) => {
-  const { connectionId } = req.body
-
-  if (!connectionId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Falta el ID de conexión'
-    })
-  }
-
-  const client = activeConnections.get(connectionId)
-  if (!client) {
-    return res.status(404).json({
-      success: false,
-      message: 'Conexión no encontrada'
-    })
-  }
-
+router.post('/disconnect/:connectionId', (req, res) => {
+  const { connectionId } = req.params
+  
   try {
-    client.end()
-    activeConnections.delete(connectionId)
-    return res.json({
-      success: true,
-      message: 'Conexión cerrada correctamente'
-    })
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      message: `Error al cerrar la conexión: ${err.message}`
+    const connection = activeConnections.get(connectionId)
+    if (connection) {
+      connection.client.end()
+      activeConnections.delete(connectionId)
+      res.json({ success: true, message: 'Desconexión exitosa' })
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        message: 'Conexión no encontrada' 
+      })
+    }
+  } catch (error) {
+    console.error('Error al desconectar:', error)
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error al cerrar la conexión SSH'
     })
   }
+})
+
+// Cleanup de conexiones al cerrar el servidor
+process.on('SIGINT', () => {
+  console.log('Cerrando conexiones SSH activas...')
+  for (const [id, connection] of activeConnections.entries()) {
+    try {
+      connection.client.end()
+      console.log(`Conexión ${id} cerrada correctamente`)
+    } catch (error) {
+      console.error(`Error al cerrar conexión ${id}:`, error)
+    }
+  }
+  activeConnections.clear()
+  process.exit(0)
 })
 
 export default router

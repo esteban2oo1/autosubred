@@ -59,7 +59,7 @@ const escapedConfig = dhcpConfig.replace(/'/g, "'\\''") // Escapar comillas simp
 
 const command = `echo '${escapedConfig}' | sudo tee /etc/dhcp/dhcpd.conf > /dev/null && sudo service isc-dhcp-server restart`
 
-sshClient.exec(command, (err, stream) => {
+sshClient.exec(command, (err: Error | undefined, stream: import('ssh2').ClientChannel) => {
   if (err) {
     return sendResponse({
       success: false,
