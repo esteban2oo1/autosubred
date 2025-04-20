@@ -7,8 +7,8 @@ WORKDIR /usr/src/app
 # Copiar package.json y package-lock.json primero para aprovechar el cache de Docker
 COPY package*.json ./
 
-# Instalar dependencias en modo producción
-RUN npm ci --omit=dev
+# Instalar dependencias - usando install en lugar de ci ya que es más flexible
+RUN npm install --omit=dev
 
 # Copiar el resto de los archivos de la app
 COPY . .
@@ -18,7 +18,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 # Exponer el puerto de la app
-EXPOSE 3000
+EXPOSE 3001
 
 # Comando para iniciar la app
 CMD ["node", "index.js"]

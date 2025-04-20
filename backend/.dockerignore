@@ -1,7 +1,19 @@
-# Ignorar node_modules y archivos innecesarios
+# Dependencias
 node_modules
 npm-debug.log
-dist
-.env
+
+# Archivos de sistema
 .DS_Store
+Thumbs.db
+
+# Archivos de desarrollo
+.git
+.gitignore
+.env
+.env.*
 *.md
+!README.md
+
+# Logs
+logs
+*.log
