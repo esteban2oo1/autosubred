@@ -6,8 +6,20 @@ Una aplicación web completa para el cálculo de subredes y configuración autom
 
 Este proyecto está dividido en dos partes principales:
 
-- **Frontend**: Una aplicación Next.js moderna con una interfaz de usuario intuitiva
-- **Backend**: Una API REST en Node.js que maneja los cálculos y la configuración SSH
+### Frontend (Next.js)
+- Desarrollado con Next.js 15 y React 19
+- TypeScript para tipo seguro
+- Tailwind CSS para estilos
+- Componentes UI modernos con shadcn/ui
+- Validación de formularios con Zod
+- React Hook Form para manejo de formularios
+
+### Backend (Node.js)
+- API REST con Express
+- Conexiones SSH seguras con node-ssh
+- Cálculos precisos con ip-subnet-calculator
+- CORS habilitado para desarrollo
+- Variables de entorno con dotenv
 
 ## Características Principales
 
@@ -17,14 +29,37 @@ Este proyecto está dividido en dos partes principales:
 - Interfaz responsiva con tema claro/oscuro
 - API RESTful documentada
 
-## Estructura del Proyecto
+## Estructura Detallada del Proyecto
 
 ```
 autosubred/
-├── frontend/       # Aplicación Next.js
-├── backend/        # API REST en Node.js
-└── README.md      # Este archivo
+├── frontend/
+│   ├── app/             # App router de Next.js
+│   ├── components/      # Componentes React
+│   ├── lib/            # Utilidades y helpers
+│   ├── public/         # Archivos estáticos
+│   └── styles/         # Estilos CSS
+│
+├── backend/
+│   ├── controllers/    # Controladores de la API
+│   ├── routes/        # Rutas de la API
+│   ├── services/      # Lógica de negocio
+│   ├── utils/         # Utilidades
+│   └── index.js       # Punto de entrada
+│
+└── README.md          # Este archivo
 ```
+
+## API Endpoints
+
+### Subnet
+- `POST /api/subnet/calculate` - Calcula información de subredes
+
+### DHCP
+- `POST /api/dhcp/configure` - Configura servidor DHCP
+
+### SSH
+- `POST /api/ssh/connect` - Prueba conexión SSH
 
 ## Requisitos Previos
 
@@ -45,7 +80,8 @@ cd autosubred
 ```bash
 cd backend
 npm install
-cp .env.example .env  # Configura las variables de entorno
+# Crea .env con:
+# PORT=3001
 npm run dev
 ```
 
@@ -53,20 +89,23 @@ npm run dev
 ```bash
 cd frontend
 pnpm install
-cp .env.example .env.local  # Configura las variables de entorno
+# Crea .env.local con:
+# NEXT_PUBLIC_API_URL=http://localhost:3001/api
 pnpm dev
 ```
 
 4. Abre http://localhost:3000 en tu navegador
 
-## Documentación
+## Componentes Principales del Frontend
 
-- [Documentación del Frontend](frontend/README.md)
-- [Documentación del Backend](backend/README.md)
+- `SimpleSubnetCalculator` - Calculadora básica de subredes
+- `VLSMCalculator` - Calculadora VLSM
+- `SSHConnection` - Gestión de conexiones SSH
+- `SubnetResults` - Visualización de resultados
 
 ## Docker
 
-El proyecto incluye Dockerfiles tanto para el frontend como para el backend:
+El proyecto incluye Dockerfiles para ambos servicios:
 
 ```bash
 # Backend
@@ -80,9 +119,32 @@ docker build -t autosubred-frontend .
 docker run -p 3000:3000 autosubred-frontend
 ```
 
+## Desarrollo
+
+### Frontend
+```bash
+cd frontend
+pnpm dev     # Desarrollo
+pnpm build   # Construcción
+pnpm start   # Producción
+```
+
+### Backend
+```bash
+cd backend
+npm run dev   # Desarrollo con recarga automática
+npm start     # Producción
+```
+
 ## Contribuir
 
-Las contribuciones son bienvenidas! Por favor, lee las guías de contribución en cada subdirectorio antes de empezar.
+Las contribuciones son bienvenidas! Por favor, sigue estos pasos:
+
+1. Haz fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Haz commit de tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
 ## Licencia
 
